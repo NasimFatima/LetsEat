@@ -6,14 +6,7 @@ from .models import User
 
 
 class CustomRegisterSerializer(serializers.Serializer):
-    """Custom Register Serializer used for signup
 
-    Args:
-        serializers (Signup):
-
-    Raises:
-        serializers.ValidationError
-    """
     email = serializers.EmailField(required=True)
     first_name = serializers.CharField(required=True, write_only=True)
     last_name = serializers.CharField(required=True, write_only=True)
@@ -23,11 +16,6 @@ class CustomRegisterSerializer(serializers.Serializer):
     password2 = serializers.CharField(required=True, write_only=True)
 
     def validate(self, data):
-        """ Validate data on given constraints
-
-        Args:
-            data (self, data): [description]
-        """
         if data['password1'] != data['password2']:
             raise serializers.ValidationError(
                 ("The two password fields didn't match."))
@@ -37,9 +25,7 @@ class CustomRegisterSerializer(serializers.Serializer):
         pass
 
     def get_cleaned_data(self):
-        """
-        Clean data
-        """
+
         return {
             'first_name': self.validated_data.get('first_name', ''),
             'last_name': self.validated_data.get('last_name', ''),
@@ -50,11 +36,7 @@ class CustomRegisterSerializer(serializers.Serializer):
         }
 
     def save(self, request):
-        """
-        Save data in database
-        returns:
-            user
-        """
+
         adapter = get_adapter()
         user = adapter.new_user(request)
         self.cleaned_data = self.get_cleaned_data()
@@ -66,9 +48,6 @@ class CustomRegisterSerializer(serializers.Serializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """
-    User Serializer
-    """
 
     # Because User and Group are in many-to-many relations so you can directly add the
     # group field in the users serializers. For more details follow django.contrib.auth.models
@@ -76,9 +55,7 @@ class UserSerializer(serializers.ModelSerializer):
     # which has groups as many to many field.
 
     class Meta:
-        """
-        meta
-        """
+
         model = User
         # groups = GroupSerializer(many=True)
         fields = ('id',  'email', 'first_name', 'last_name', 'password',

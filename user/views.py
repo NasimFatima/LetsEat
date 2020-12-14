@@ -27,18 +27,8 @@ class CustomRegisterView(RegisterView):
     """
 
     def create(self, request, *args, **kwargs):
-        """
 
-        Args:
-            request:
-            *args:
-            **kwargs:
-
-        Returns:
-
-        """
         try:
-            print("IN CREATE USER register view")
             if User.objects.filter(email=request.data['email']).exists():
                 return Response({"error": "User Email already exists!"}, status.HTTP_400_BAD_REQUEST)
             user = UserSerializer(data=request.data)
