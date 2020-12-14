@@ -3,15 +3,18 @@
 Returns:
     [type]: [description]
 """
-from rest_framework import status
-from rest_framework.generics import GenericAPIView
-from rest_auth.serializers import TokenSerializer, JWTSerializer, LoginSerializer
-from rest_framework.authtoken.models import Token as TokenModel
-from rest_auth.utils import jwt_encode, default_create_token as create_token
+from datetime import datetime
+
 from django.conf import settings
+from rest_auth.serializers import (JWTSerializer, LoginSerializer,
+                                   TokenSerializer)
+from rest_auth.utils import default_create_token as create_token
+from rest_auth.utils import jwt_encode
+from rest_framework import status
+from rest_framework.authtoken.models import Token as TokenModel
+from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework_jwt.settings import api_settings as jwt_settings
-from datetime import datetime
 
 
 class LoginService(GenericAPIView):

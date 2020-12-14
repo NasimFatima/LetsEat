@@ -1,7 +1,8 @@
-from .views import CustomRegisterView, LoginView, GoogleView
 from django.conf.urls import include, url
 from django.urls import re_path
 from rest_auth.registration.views import VerifyEmailView
+
+from .views import CustomRegisterView, GoogleView, LoginView
 
 urlpatterns = [
     url(r'^accounts/', include('allauth.urls')),

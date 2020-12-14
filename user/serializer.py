@@ -1,6 +1,8 @@
-from rest_auth.registration.serializers import RegisterSerializer, get_adapter, setup_user_email
-from .models import User
+from rest_auth.registration.serializers import (RegisterSerializer,
+                                                get_adapter, setup_user_email)
 from rest_framework import serializers
+
+from .models import User
 
 
 class CustomRegisterSerializer(serializers.Serializer):
