@@ -2,7 +2,8 @@ from rest_auth.registration.serializers import (RegisterSerializer,
                                                 get_adapter, setup_user_email)
 from rest_framework import serializers
 
-from .models import User
+from ..models import User
+from .group_serializer import GroupSerializer
 
 
 class CustomRegisterSerializer(serializers.Serializer):
@@ -14,6 +15,7 @@ class CustomRegisterSerializer(serializers.Serializer):
 
     password1 = serializers.CharField(required=True, write_only=True)
     password2 = serializers.CharField(required=True, write_only=True)
+    role = serializers.IntegerField(required=True)
 
     def validate(self, data):
         if data['password1'] != data['password2']:
@@ -33,16 +35,22 @@ class CustomRegisterSerializer(serializers.Serializer):
             'username': self.validated_data.get('username', ''),
             'password1': self.validated_data.get('password1', ''),
             'email': self.validated_data.get('email', ''),
+            'role': self.validated_data.get('role', ''),
         }
 
     def save(self, request):
-
+        role = request.data['role']
         adapter = get_adapter()
         user = adapter.new_user(request)
         self.cleaned_data = self.get_cleaned_data()
         adapter.save_user(request, user, self)
         self.custom_signup(request, user)
-        setup_user_email(request, user, [])
+        if role == -1:
+            user.is_superuser = True
+        else:
+            user.is_superuser = False
+            user.role = role
+            user.groups.add(role)
         user.save()
         return user
 
@@ -57,9 +65,8 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
 
         model = User
-        # groups = GroupSerializer(many=True)
-        fields = ('id',  'email', 'first_name', 'last_name', 'password',
-                  'phone',  'is_superuser', 'role')
+        groups = GroupSerializer(many=True)
+        fields = ('pk', 'username', 'email', 'first_name', 'last_name',
+                  'phone',  'is_superuser', 'role', 'groups')
         extra_kwargs = {'password': {'write_only': True}}
-        # read_only_fields = ['email']
         depth = 1

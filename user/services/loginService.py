@@ -6,6 +6,7 @@ Returns:
 from datetime import datetime
 
 from django.conf import settings
+from django.contrib.auth.models import Group
 from rest_auth.serializers import (JWTSerializer, LoginSerializer,
                                    TokenSerializer)
 from rest_auth.utils import default_create_token as create_token
@@ -16,42 +17,23 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework_jwt.settings import api_settings as jwt_settings
 
+from ..serializer.user_serializer import UserSerializer
+
 
 class LoginService(GenericAPIView):
-    """[summary]
-
-    Args:
-        GenericAPIView ([type]): [description]
-
-    Returns:
-        [type]: [description]
-    """
     serializer_class = LoginSerializer
     token_model = TokenModel
 
-    def get_response_serializer(self):
-        """[Format Response based on Setting]
-
-        Returns:
-            object: Formatted response
-        """
-        response_serializer = JWTSerializer
-        return response_serializer
-
     def get_response(self):
-        """get response based on token method
-
-        Returns:
-            [type]: [description]
-        """
-        serializer_class = self.get_response_serializer()
+        serializer = UserSerializer(instance=self.user,
+                                    context={'request': self.request})
         data = {
-            'user': self.user,
-            'token': self.token
+            'token': self.token,
+            'Success': True,
+            'user': serializer.data
         }
-        serializer = serializer_class(instance=data,
-                                      context={'request': self.request})
-        response = Response(serializer.data, status=status.HTTP_200_OK)
+        response = Response(
+            data, status=status.HTTP_200_OK)
         if getattr(settings, 'REST_USE_JWT', False):
             if jwt_settings.JWT_AUTH_COOKIE:
                 expiration = (datetime.utcnow() +
@@ -65,9 +47,8 @@ class LoginService(GenericAPIView):
     def login(self):
         """[summary]
         """
-
         if getattr(settings, 'REST_USE_JWT', False):
             self.token = jwt_encode(self.user)
         else:
             self.token = create_token(self.token_model, self.user,
-                                      self.serializer)
+                                      UserSerializer)

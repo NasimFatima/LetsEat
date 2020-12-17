@@ -4,14 +4,14 @@ from django.contrib.auth.hashers import make_password
 from django.shortcuts import render
 from rest_auth.registration.views import RegisterView
 from rest_framework import status
-from rest_framework.decorators import permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.utils import json
 
-from .models import User
-from .serializer import UserSerializer
-from .services.loginService import LoginService
+from ..models import User
+from ..serializer.user_serializer import UserSerializer
+from ..services.loginService import LoginService
 
 # from django.views.decorators.debug import sensitive_post_parameters
 
@@ -31,19 +31,23 @@ class CustomRegisterView(RegisterView):
         try:
             if User.objects.filter(email=request.data['email']).exists():
                 return Response({"error": "User Email already exists!"}, status.HTTP_400_BAD_REQUEST)
-            user = UserSerializer(data=request.data)
+            role = request.data['role']
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             user = self.perform_create(serializer)
             headers = self.get_success_headers(serializer.data)
+            user_data = UserSerializer(user).data
             response = {
+                'token': self.token,
+                'Success': True,
                 "status": 200,
-                "resp": self.get_response_data(user)
+                'user': user_data
             }
             return Response(response,
                             status=status.HTTP_201_CREATED,
                             headers=headers)
         except Exception as err:
+            print(err)
             return Response({"error": "Internal Server Error"}, status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -61,17 +65,21 @@ class LoginView(LoginService):
         Returns:
 
         """
-        self.request = request
-        self.serializer = self.get_serializer(data=self.request.data,
-                                              context={'request': request})
-        self.serializer.is_valid(raise_exception=True)
-        self.user = self.serializer.validated_data['user']
-        self.login()
-        response = self.get_response()
+        try:
+            self.request = request
+            self.serializer = self.get_serializer(data=self.request.data,
+                                                  context={'request': request})
+            self.serializer.is_valid(raise_exception=True)
+            self.user = self.serializer.validated_data['user']
+            self.login()
+            response = self.get_response()
+        except Exception as err:
+            print("login", err)
+            return Response({"error": "Unable to Login with Provided Credentials", "Success": False})
         return response
 
 
-@permission_classes([AllowAny])
+@ permission_classes([AllowAny])
 class GoogleView(LoginService):
     def post(self, request):
         payload = {'access_token': request.data.get(
@@ -100,3 +108,9 @@ class GoogleView(LoginService):
         self.login()
         response = self.get_response()
         return response
+
+
+@api_view()
+@permission_classes([IsAuthenticated])
+def get_user_dummy_method(request):
+    return Response({'data': "USer is Authenticated"})

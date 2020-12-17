@@ -40,6 +40,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     password = models.CharField(max_length=300)
+    is_superuser = models.BooleanField(default=True)
+    phone = models.CharField(max_length=10, blank=True, null=True)
+    address = models.CharField(max_length=300, blank=True, null=True)
+    role = models.IntegerField(blank=True, null=True)
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
