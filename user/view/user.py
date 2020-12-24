@@ -30,42 +30,37 @@ class CustomRegisterView(RegisterView):
 
         try:
             if User.objects.filter(email=request.data['email']).exists():
-                return Response({"error": "User Email already exists!"}, status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "User Email already exists!", "Success": False}, status.HTTP_200_OK)
             role = request.data['role']
             serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            user = self.perform_create(serializer)
-            headers = self.get_success_headers(serializer.data)
-            user_data = UserSerializer(user).data
-            response = {
-                'token': self.token,
-                'Success': True,
-                "status": 200,
-                'user': user_data
-            }
-            return Response(response,
-                            status=status.HTTP_201_CREATED,
-                            headers=headers)
+            if serializer.is_valid():
+                user = self.perform_create(serializer)
+                user.groups.add(role)
+                headers = self.get_success_headers(serializer.data)
+                user_data = UserSerializer(user).data
+                response = {
+                    'token': self.token,
+                    'Success': True,
+                    "status": 200,
+                    'user': user_data
+                }
+                return Response(response,
+                                status=status.HTTP_201_CREATED,
+                                headers=headers)
+            else:
+                return Response({"error": serializer.errors, "Success": False}, status.HTTP_200_OK)
         except Exception as err:
             print(err)
-            return Response({"error": "Internal Server Error"}, status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": "err"}, status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @permission_classes([AllowAny])
 class LoginView(LoginService):
 
     def post(self, request, *args, **kwargs):
-        """
 
-        Args:
-            request:
-            *args:
-            **kwargs:
-
-        Returns:
-
-        """
         try:
+            print("request.data", request.data)
             self.request = request
             self.serializer = self.get_serializer(data=self.request.data,
                                                   context={'request': request})
@@ -95,22 +90,16 @@ class GoogleView(LoginService):
 
         # create user if not exist
         try:
-            user = User.objects.get(email=data['email'])
-        except User.DoesNotExist:
-            user = User()
-            user.email = data['email']
-            # provider random default password
-            user.password = make_password(
-                BaseUserManager().make_random_password())
-            user.email = data['email']
-            user.save()
-        self.user = user
-        self.login()
-        response = self.get_response()
-        return response
+            user, created = User.objects.get_or_create(email=data['email'])
+            if created:
+                user.password = make_password(
+                    BaseUserManager().make_random_password())
+                user.email = data['email']
+                user.save()
 
-
-@api_view()
-@permission_classes([IsAuthenticated])
-def get_user_dummy_method(request):
-    return Response({'data': "USer is Authenticated"})
+            self.user = user
+            self.login()
+            response = self.get_response()
+            return response
+        except Exception as err:
+            return Response({"error": "Unable to Login with Provided Credentials", "Success": False})

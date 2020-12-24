@@ -13,8 +13,11 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 from pathlib import Path
 
 # Setting for User app and JWT authentication
-from user.settings import *
+# from user.settings import *
 
+from django.conf import settings
+import datetime
+from rest_framework.settings import APISettings
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -31,6 +34,14 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 CORS_ALLOWED_ORIGINS = ["http://localhost:3000", ]
 
+# used in user app
+USER_APP_SETTINGS = {
+    "USER_MODEL": 'user.User',
+    "USE_JWT": True,
+    "JWT_AUTH": {
+        'JWT_EXPIRATION_DELTA': datetime.timedelta(days=1),
+    }
+}
 # Application definition
 
 DJANGO_APPS = [
@@ -43,6 +54,7 @@ DJANGO_APPS = [
 ]
 PROJECT_APPS = [
     'user',
+    'menu'
 ]
 
 THIRD_PARTY_APPS = [
@@ -161,3 +173,7 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 2
 ACCOUNT_EMAIL_VERIFICATION = 'none'
+
+AUTH_USER_MODEL = USER_APP_SETTINGS['USER_MODEL']
+REST_USE_JWT = USER_APP_SETTINGS['USE_JWT']
+JWT_AUTH = USER_APP_SETTINGS['JWT_AUTH']

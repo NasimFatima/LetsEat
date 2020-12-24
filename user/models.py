@@ -8,9 +8,6 @@ class UserManager(BaseUserManager):
     use_in_migrations = True
 
     def _create_user(self, email, password, **extra_fields):
-        """
-        Creates and saves a User with the given email and password.
-        """
         if not email:
             raise ValueError('The given email must be set')
         email = self.normalize_email(email)
@@ -40,10 +37,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     password = models.CharField(max_length=300)
-    is_superuser = models.BooleanField(default=True)
+    is_superuser = models.BooleanField(default=False)
     phone = models.CharField(max_length=10, blank=True, null=True)
     address = models.CharField(max_length=300, blank=True, null=True)
-    role = models.IntegerField(blank=True, null=True)
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
