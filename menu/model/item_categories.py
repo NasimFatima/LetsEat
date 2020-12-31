@@ -3,7 +3,7 @@ from .menu_item import MenuItems
 from .common import Common
 
 
-class ItemsCategory(Common):
+class ItemsCategory(models.Model):
     name = models.CharField(max_length=50)
     description = models.CharField(max_length=300)
     menu_item = models.ForeignKey(MenuItems, on_delete=models.CASCADE, null=True, blank=True,

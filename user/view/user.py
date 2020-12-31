@@ -3,12 +3,12 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.hashers import make_password
 from django.shortcuts import render
 from rest_auth.registration.views import RegisterView
-from rest_framework import status
+from rest_framework import status, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.utils import json
-
+from letseat.settings import MAX_EMPLOYEES
 from ..models import User
 from ..serializer.user_serializer import UserSerializer
 from ..services.loginService import LoginService
@@ -60,7 +60,6 @@ class LoginView(LoginService):
     def post(self, request, *args, **kwargs):
 
         try:
-            print("request.data", request.data)
             self.request = request
             self.serializer = self.get_serializer(data=self.request.data,
                                                   context={'request': request})
@@ -74,7 +73,7 @@ class LoginView(LoginService):
         return response
 
 
-@ permission_classes([AllowAny])
+@permission_classes([AllowAny])
 class GoogleView(LoginService):
     def post(self, request):
         payload = {'access_token': request.data.get(
@@ -103,3 +102,30 @@ class GoogleView(LoginService):
             return response
         except Exception as err:
             return Response({"error": "Unable to Login with Provided Credentials", "Success": False})
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    serializer_class = UserSerializer
+    queryset = User.objects.all()
+
+    def create(self, request, **kwargs):
+        try:
+            number_of_users = User.objects.filter(
+                groups__name='Employee').count()
+            if number_of_users > MAX_EMPLOYEES:
+                return Response({'data': {}, 'Success': False, 'Error': 'Employees Limit Exceeded'}, status.HTTP_200_OK)
+            data = request.data
+            groups = data.get("role")
+            password1 = data.pop("password1")
+            password2 = data.pop("password2")
+            if password1 != password2:
+                return Response({'data': {}, 'Success': False, 'Error': 'Password not matched'}, status.HTTP_200_OK)
+            data['password'] = password1
+            user = UserSerializer(data=data)
+            if user.is_valid():
+                user.save(groups=groups)
+                return Response({'data': user.data, 'Success': True, 'Error': ''}, status.HTTP_200_OK)
+            else:
+                return Response({'data': {}, 'Success': False, 'Error': user.errors}, status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'data': {}, 'Success': False, 'Error': str(e)}, status.HTTP_200_OK)

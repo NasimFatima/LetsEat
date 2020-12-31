@@ -50,7 +50,8 @@ DJANGO_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles'
+    'django.contrib.staticfiles',
+    'django_filters',
 ]
 PROJECT_APPS = [
     'user',
@@ -125,6 +126,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
     ),
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
 
 }
 
@@ -177,3 +179,4 @@ ACCOUNT_EMAIL_VERIFICATION = 'none'
 AUTH_USER_MODEL = USER_APP_SETTINGS['USER_MODEL']
 REST_USE_JWT = USER_APP_SETTINGS['USE_JWT']
 JWT_AUTH = USER_APP_SETTINGS['JWT_AUTH']
+MAX_EMPLOYEES = 3

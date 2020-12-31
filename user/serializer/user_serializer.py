@@ -16,6 +16,14 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         groups = GroupSerializer(many=True)
         fields = ('pk', 'username', 'email', 'first_name', 'last_name',
-                  'phone',  'is_superuser', 'groups')
-        extra_kwargs = {'password': {'write_only': True}}
+                  'phone',  'is_superuser', 'groups', 'password')
         depth = 1
+
+    def create(self, validated_data):
+        group = validated_data.pop('groups')
+        password = validated_data.pop('password')
+        user = User.objects.create(**validated_data)
+        user.groups.add(group)
+        user.set_password(password)
+        user.save()
+        return user

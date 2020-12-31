@@ -3,7 +3,7 @@ from .item_categories import ItemsCategory
 from .common import Common
 
 
-class ItemSize(Common):
+class ItemSize(models.Model):
     item_category = models.ForeignKey(ItemsCategory, on_delete=models.CASCADE, null=True, blank=True,
                                       related_name='item_category')
     price = models.IntegerField(null=True)
