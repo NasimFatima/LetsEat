@@ -9,13 +9,19 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.utils import json
 from letseat.settings import MAX_EMPLOYEES
-from ..models import User
-from ..serializer.user_serializer import UserSerializer
-from ..services.loginService import LoginService
+from .models import User
+from .serializer.user_serializer import UserSerializer
+from .services.loginService import login
+from django.contrib.auth.models import Group, ContentType
+from .serializer.group_serializer import GroupSerializer
+from rest_framework.generics import GenericAPIView
+from rest_auth.serializers import (LoginSerializer)
 
-# from django.views.decorators.debug import sensitive_post_parameters
 
-# Create your views here.
+@permission_classes([AllowAny])
+class GroupViewSet(viewsets.ModelViewSet):
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
 
 
 @permission_classes([AllowAny])
@@ -55,7 +61,8 @@ class CustomRegisterView(RegisterView):
 
 
 @permission_classes([AllowAny])
-class LoginView(LoginService):
+class LoginView(GenericAPIView):
+    serializer_class = LoginSerializer
 
     def post(self, request, *args, **kwargs):
 
@@ -65,8 +72,7 @@ class LoginView(LoginService):
                                                   context={'request': request})
             self.serializer.is_valid(raise_exception=True)
             self.user = self.serializer.validated_data['user']
-            self.login()
-            response = self.get_response()
+            response = login(self)
         except Exception as err:
             print("login", err)
             return Response({"error": "Unable to Login with Provided Credentials", "Success": False})
@@ -74,7 +80,9 @@ class LoginView(LoginService):
 
 
 @permission_classes([AllowAny])
-class GoogleView(LoginService):
+class GoogleView(GenericAPIView):
+    serializer_class = LoginSerializer
+
     def post(self, request):
         payload = {'access_token': request.data.get(
             "token")}  # validate the token
@@ -97,8 +105,7 @@ class GoogleView(LoginService):
                 user.save()
 
             self.user = user
-            self.login()
-            response = self.get_response()
+            response = login(self)
             return response
         except Exception as err:
             return Response({"error": "Unable to Login with Provided Credentials", "Success": False})

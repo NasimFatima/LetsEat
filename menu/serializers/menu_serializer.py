@@ -19,7 +19,7 @@ class ItemsCategorySerializer(serializers.ModelSerializer):
 
 
 class MenuItemSerializer(serializers.ModelSerializer):
-    item = ItemsCategorySerializer(many=True)
+    item = ItemsCategorySerializer(many=True, required=False)
 
     class Meta:
         model = MenuItems
