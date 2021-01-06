@@ -39,8 +39,7 @@ class MenuViewSet(viewsets.ModelViewSet):
             serializer = MenuItemSerializer(menu_item)
             return Response({'data': serializer.data}, status.HTTP_200_OK)
         except Exception as e:
-            print("Error", e)
-        return Response(status.HTTP_200_OK)
+            return Response(status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @permission_classes([AllowAny])

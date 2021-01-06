@@ -56,8 +56,7 @@ class CustomRegisterView(RegisterView):
             else:
                 return Response({"error": serializer.errors, "Success": False}, status.HTTP_200_OK)
         except Exception as err:
-            print(err)
-            return Response({"error": "err"}, status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": str(err)}, status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @permission_classes([AllowAny])
@@ -74,7 +73,6 @@ class LoginView(GenericAPIView):
             self.user = self.serializer.validated_data['user']
             response = login(self)
         except Exception as err:
-            print("login", err)
             return Response({"error": "Unable to Login with Provided Credentials", "Success": False})
         return response
 
