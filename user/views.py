@@ -16,9 +16,15 @@ from django.contrib.auth.models import Group, ContentType
 from .serializer.group_serializer import GroupSerializer
 from rest_framework.generics import GenericAPIView
 from rest_auth.serializers import (LoginSerializer)
+from rest_framework_jwt.settings import api_settings as jwt_settings
+from rest_framework.views import APIView
+from django.contrib.auth import (
+    logout as django_logout
+)
+from django.core.exceptions import ObjectDoesNotExist
 
 
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 class GroupViewSet(viewsets.ModelViewSet):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
@@ -134,3 +140,29 @@ class UserViewSet(viewsets.ModelViewSet):
                 return Response({'data': {}, 'Success': False, 'Error': user.errors}, status.HTTP_200_OK)
         except Exception as e:
             return Response({'data': {}, 'Success': False, 'Error': str(e)}, status.HTTP_200_OK)
+
+
+@permission_classes([IsAuthenticated])
+class LogoutView(APIView):
+    """
+    Calls Django logout method and delete the Token object
+    assigned to the current User object.
+    Accepts/Returns nothing.
+    """
+    permission_classes = (IsAuthenticated)
+
+    def post(self, request, *args, **kwargs):
+        response = self.logout(request)
+        return response
+
+    def logout(self, request):
+        try:
+            request.user.auth_token.delete()
+        except (AttributeError, ObjectDoesNotExist):
+            pass
+        django_logout(request)
+        response = Response({"detail": "Successfully logged out."},
+                            status=status.HTTP_200_OK)
+        if jwt_settings.JWT_AUTH_COOKIE:
+            response.delete_cookie(jwt_settings.JWT_AUTH_COOKIE)
+        return response
