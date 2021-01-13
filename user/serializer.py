@@ -1,7 +1,14 @@
 from rest_framework import serializers
+from .models import User
+from django.contrib.auth.models import Group
+from rest_framework import serializers
 
-from ..models import User
-from .group_serializer import GroupSerializer
+
+class GroupSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Group
+        fields = '__all__'
 
 
 class UserSerializer(serializers.ModelSerializer):

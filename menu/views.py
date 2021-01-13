@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import permission_classes, api_view
 from user.permissions import IsAdminUser
-from .serializers.menu_serializer import MenuItemSerializer, ItemSizeSerializer, MenuItemSerializerForHeader
+from .serializers import MenuItemSerializer, ItemSizeSerializer, MenuItemSerializerForHeader
 from .models import MenuItems, ItemsCategory, ItemSize
 
 
@@ -39,7 +39,7 @@ class MenuViewSet(viewsets.ModelViewSet):
             serializer = MenuItemSerializer(menu_item)
             return Response({'data': serializer.data}, status.HTTP_200_OK)
         except Exception as e:
-            return Response(status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'data': {}, 'error': str(e)})
 
 
 @permission_classes([AllowAny])

@@ -10,10 +10,10 @@ from rest_framework.response import Response
 from rest_framework.utils import json
 from letseat.settings import MAX_EMPLOYEES
 from .models import User
-from .serializer.user_serializer import UserSerializer
+from .serializer import UserSerializer
 from .services.loginService import login
 from django.contrib.auth.models import Group, ContentType
-from .serializer.group_serializer import GroupSerializer
+from .serializer import GroupSerializer
 from rest_framework.generics import GenericAPIView
 from rest_auth.serializers import (LoginSerializer)
 from rest_framework_jwt.settings import api_settings as jwt_settings
@@ -62,7 +62,7 @@ class CustomRegisterView(RegisterView):
             else:
                 return Response({"error": serializer.errors, "Success": False}, status.HTTP_200_OK)
         except Exception as err:
-            return Response({"error": str(err)}, status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": str(err), "Success": False})
 
 
 @permission_classes([AllowAny])
@@ -163,6 +163,4 @@ class LogoutView(APIView):
         django_logout(request)
         response = Response({"detail": "Successfully logged out."},
                             status=status.HTTP_200_OK)
-        if jwt_settings.JWT_AUTH_COOKIE:
-            response.delete_cookie(jwt_settings.JWT_AUTH_COOKIE)
         return response

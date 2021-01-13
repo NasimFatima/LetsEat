@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ..models import MenuItems, ItemsCategory, ItemSize
+from .models import MenuItems, ItemsCategory, ItemSize
 
 
 class ItemSizeSerializer(serializers.ModelSerializer):

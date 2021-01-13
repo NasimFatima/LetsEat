@@ -18,9 +18,6 @@ class MenuItems(Common):
 
     name = models.CharField(max_length=50)
 
-    class Meta:
-        db_table = "menu_items"
-
     def __str__(self):
 
         return "{}".format(self.name)
@@ -32,15 +29,9 @@ class ItemsCategory(models.Model):
     menu_item = models.ForeignKey(MenuItems, on_delete=models.CASCADE, null=True, blank=True,
                                   related_name='item')
 
-    class Meta:
-        db_table = "item_category"
-
 
 class ItemSize(models.Model):
     item_category = models.ForeignKey(ItemsCategory, on_delete=models.CASCADE, null=True, blank=True,
                                       related_name='item_category')
     price = models.IntegerField(null=True)
     size = models.CharField(null=False, max_length=100)
-
-    class Meta:
-        db_table = "item_size"
