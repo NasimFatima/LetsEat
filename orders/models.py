@@ -30,6 +30,7 @@ class Orders(Common):
     total_bill = models.IntegerField()
     payment_method = models.IntegerField(
         choices=PAYMENT_METHOD_CHOICES, null=True)
+    status = models.CharField(max_length=20, default='Pending')
 
     def save(self, *args, **kwargs):
         self.order_number = self.order_number + 1

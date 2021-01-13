@@ -1,10 +1,9 @@
 import requests
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.hashers import make_password
-from django.shortcuts import render
 from rest_auth.registration.views import RegisterView
 from rest_framework import status, viewsets
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.utils import json
@@ -12,11 +11,10 @@ from letseat.settings import MAX_EMPLOYEES
 from .models import User
 from .serializer import UserSerializer
 from .services.loginService import login
-from django.contrib.auth.models import Group, ContentType
+from django.contrib.auth.models import Group
 from .serializer import GroupSerializer
 from rest_framework.generics import GenericAPIView
 from rest_auth.serializers import (LoginSerializer)
-from rest_framework_jwt.settings import api_settings as jwt_settings
 from rest_framework.views import APIView
 from django.contrib.auth import (
     logout as django_logout

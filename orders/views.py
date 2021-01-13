@@ -1,8 +1,7 @@
-from rest_framework import status, viewsets
+from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import permission_classes, api_view
-from user.permissions import IsAdminUser
+from rest_framework.decorators import permission_classes
 from .serializer import OrdersSerializer, OrderItemsSerializer
 from .models import Orders, OrderItems
 
@@ -29,3 +28,12 @@ class OrdersViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(e)
             return Response({'data': {}, 'error': str(e)})
+
+    def list(self, request, **kwargs):
+        if request.user.groups.filter(name='Customer').exists():
+            orders = Orders.objects.filter(order_by=request.user.id)
+        else:
+            orders = Orders.objects.all()
+
+        serializer = OrdersSerializer(orders, many=True)
+        return Response({'data': serializer.data})

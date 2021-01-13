@@ -1,9 +1,7 @@
 from rest_framework import status, viewsets
-from django.contrib.auth.models import Group, ContentType
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import permission_classes, api_view
-from user.permissions import IsAdminUser
+from rest_framework.decorators import permission_classes
 from .serializers import MenuItemSerializer, ItemSizeSerializer, MenuItemSerializerForHeader
 from .models import MenuItems, ItemsCategory, ItemSize
 
