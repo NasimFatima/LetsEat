@@ -1,14 +1,14 @@
 from rest_framework import status, viewsets
 from django.contrib.auth.models import Group, ContentType
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import permission_classes, api_view
 from user.permissions import IsAdminUser
 from .serializers import MenuItemSerializer, ItemSizeSerializer, MenuItemSerializerForHeader
 from .models import MenuItems, ItemsCategory, ItemSize
 
 
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 class MenuViewSet(viewsets.ModelViewSet):
     queryset = MenuItems.objects.all()
     serializer_class = MenuItemSerializer
@@ -42,7 +42,7 @@ class MenuViewSet(viewsets.ModelViewSet):
             return Response({'data': {}, 'error': str(e)})
 
 
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 class MenuItemViewSet(viewsets.ModelViewSet):
     queryset = MenuItems.objects.all()
     serializer_class = MenuItemSerializerForHeader
