@@ -1,12 +1,12 @@
 from rest_framework import status, viewsets
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.decorators import permission_classes
 from .serializers import MenuItemSerializer, ItemSizeSerializer, MenuItemSerializerForHeader
 from .models import MenuItems, ItemsCategory, ItemSize
 
 
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 class MenuViewSet(viewsets.ModelViewSet):
     queryset = MenuItems.objects.all()
     serializer_class = MenuItemSerializer
@@ -40,7 +40,7 @@ class MenuViewSet(viewsets.ModelViewSet):
             return Response({'data': {}, 'error': str(e)})
 
 
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 class MenuItemViewSet(viewsets.ModelViewSet):
     queryset = MenuItems.objects.all()
     serializer_class = MenuItemSerializerForHeader

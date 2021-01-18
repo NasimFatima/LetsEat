@@ -31,9 +31,10 @@ class OrdersViewSet(viewsets.ModelViewSet):
 
     def list(self, request, **kwargs):
         if request.user.groups.filter(name='Customer').exists():
-            orders = Orders.objects.filter(order_by=request.user.id)
+            orders = Orders.objects.filter(
+                order_by=request.user.id).order_by('-id')
         else:
-            orders = Orders.objects.all()
+            orders = Orders.objects.all().order_by('-id')
 
         serializer = OrdersSerializer(orders, many=True)
         return Response({'data': serializer.data})

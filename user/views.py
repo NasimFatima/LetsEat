@@ -70,24 +70,22 @@ class LoginView(GenericAPIView):
     def post(self, request, *args, **kwargs):
 
         try:
-            self.request = request
-            self.serializer = self.get_serializer(data=self.request.data,
-                                                  context={'request': request})
-            self.serializer.is_valid(raise_exception=True)
-            self.user = self.serializer.validated_data['user']
-            response = login(self)
+            access_token = request.data.get("token", None)
+            if access_token:
+                response = self.google_login(access_token)
+            else:
+                self.request = request
+                self.serializer = self.get_serializer(data=self.request.data,
+                                                      context={'request': request})
+                self.serializer.is_valid(raise_exception=True)
+                self.user = self.serializer.validated_data['user']
+                response = login(self)
         except Exception as err:
             return Response({"error": "Unable to Login with Provided Credentials", "Success": False})
         return response
 
-
-@permission_classes([AllowAny])
-class GoogleView(GenericAPIView):
-    serializer_class = LoginSerializer
-
-    def post(self, request):
-        payload = {'access_token': request.data.get(
-            "token")}  # validate the token
+    def google_login(self, access_token):
+        payload = {'access_token': access_token}
         r = requests.get(
             'https://www.googleapis.com/oauth2/v2/userinfo', params=payload)
         data = json.loads(r.text)
@@ -109,6 +107,7 @@ class GoogleView(GenericAPIView):
             self.user = user
             response = login(self)
             return response
+
         except Exception as err:
             return Response({"error": "Unable to Login with Provided Credentials", "Success": False})
 
@@ -138,6 +137,22 @@ class UserViewSet(viewsets.ModelViewSet):
                 return Response({'data': {}, 'Success': False, 'Error': user.errors}, status.HTTP_200_OK)
         except Exception as e:
             return Response({'data': {}, 'Success': False, 'Error': str(e)}, status.HTTP_200_OK)
+
+    def list(self, request):
+        try:
+            groups = request.query_params.get('groups', None)
+            print("groups", groups)
+            if groups:
+                print("in groups")
+                users = User.objects.filter(groups__name=groups)
+            else:
+                print("in else")
+                users = User.objects.all()
+            serializer = UserSerializer(users, many=True)
+            return Response({'data': serializer.data, "error": '', "Success": False})
+        except Exception as e:
+            print(e)
+            return Response({'data': [], "error": str(e), "Success": False})
 
 
 @permission_classes([IsAuthenticated])
