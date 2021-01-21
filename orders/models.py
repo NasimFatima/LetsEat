@@ -20,21 +20,22 @@ class Orders(Common):
     CARD = 2
     Other = 3
 
-    PAYMENT_METHOD_CHOICES = [
+    PAYMENT_METHOD_CHOICES_DICT = {
+        1: 'Cash On Delivery',
+        2: 'Card',
+        3: 'None'
+    }
+    PAYMENT_METHOD_CHOICES = (
         (CASH_ON_DELIVERY, 'CASH_ON_DELIVERY'),
         (CARD, 'CARD'),
         (Other, 'Other')
-    ]
+    )
 
-    order_number = models.IntegerField(default=0)
     total_bill = models.IntegerField()
     payment_method = models.IntegerField(
         choices=PAYMENT_METHOD_CHOICES, null=True)
     status = models.CharField(max_length=20, default='Pending')
-
-    def save(self, *args, **kwargs):
-        self.order_number = self.order_number + 1
-        super().save(*args, **kwargs)
+    is_checkedout = models.BooleanField(default=False)
 
 
 class OrderItems(models.Model):

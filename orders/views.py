@@ -14,27 +14,53 @@ class OrdersViewSet(viewsets.ModelViewSet):
     def create(self, request, **kwargs):
         try:
             data = request.data
-            data['order_by'] = request.user
-            order_items = data.pop('order_items', None)
-            order = Orders.objects.create(**data)
-            if order_items:
-                order_items = [dict(item, order=order.id)
-                               for item in order_items]
-                serializer = OrderItemsSerializer(data=order_items, many=True)
-                serializer.is_valid(raise_exception=True)
-                serializer.save()
-            serializer = OrdersSerializer(order)
+            order_type = data.get('type', None)
+            if order_type == 'place_order':
+                data.pop("type")
+                order_exists = Orders.objects.filter(
+                    order_by=request.user, is_checkedout=False).update(**data)
+            else:
+
+                order_item = data.pop('order_items', None)
+                order_exists = Orders.objects.filter(
+                    order_by=request.user, is_checkedout=False).order_by('-id').first()
+                if not order_exists:
+                    data['order_by'] = request.user
+                    order_exists = Orders.objects.create(**data)
+                else:
+                    order_exists.total_bill = order_exists.total_bill + \
+                        data['total_bill']
+                    order_exists.save()
+                order_item_exists = OrderItems.objects.filter(
+                    order=order_exists.id, item_category=order_item['item_category']).first()
+                if order_item_exists:
+                    if order_item['quantity'] > 0:
+                        order_item_exists.quantity = order_item['quantity']
+                        order_item_exists.save()
+                    else:
+                        order_item_exists.delete()
+                else:
+                    order_item['order'] = order_exists.id
+                    serializer = OrderItemsSerializer(data=order_item)
+                    serializer.is_valid(raise_exception=True)
+                    serializer.save()
+            serializer = OrdersSerializer(order_exists)
             return Response({'data': serializer.data})
         except Exception as e:
             print(e)
             return Response({'data': {}, 'error': str(e)})
 
     def list(self, request, **kwargs):
-        if request.user.groups.filter(name='Customer').exists():
+        listing_type = request.query_params.get('type', None)
+        if listing_type:
             orders = Orders.objects.filter(
-                order_by=request.user.id).order_by('-id')
+                is_checkedout=False).order_by('-id')
         else:
-            orders = Orders.objects.all().order_by('-id')
+            if request.user.groups.filter(name='Customer').exists():
+                orders = Orders.objects.filter(
+                    order_by=request.user.id).exclude(is_checkedout=False).order_by('-id')
+            else:
+                orders = Orders.objects.all().exclude(is_checkedout=False).order_by('-id')
 
         serializer = OrdersSerializer(orders, many=True)
         return Response({'data': serializer.data})

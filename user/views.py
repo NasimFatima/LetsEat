@@ -22,7 +22,7 @@ from django.contrib.auth import (
 from django.core.exceptions import ObjectDoesNotExist
 
 
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 class GroupViewSet(viewsets.ModelViewSet):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
