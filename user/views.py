@@ -10,7 +10,6 @@ from rest_framework.utils import json
 from letseat.settings import MAX_EMPLOYEES
 from .models import User
 from .serializer import UserSerializer
-from .services.loginService import login
 from django.contrib.auth.models import Group
 from .serializer import GroupSerializer
 from rest_framework.generics import GenericAPIView
@@ -20,77 +19,73 @@ from django.contrib.auth import (
     logout as django_logout
 )
 from django.core.exceptions import ObjectDoesNotExist
+from rest_auth.utils import jwt_encode
 
 
-@permission_classes([AllowAny])
 class GroupViewSet(viewsets.ModelViewSet):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
+    permission_classes = [IsAuthenticated, ]
 
 
-@permission_classes([AllowAny])
 class CustomRegisterView(RegisterView):
     """
     CustomRegisterView class for django-rest-auth
     that extends RegisterView. Create function is
     overriden to return a more detailed response
     """
+    permission_classes = [AllowAny, ]
 
     def create(self, request, *args, **kwargs):
 
-        try:
-            if User.objects.filter(email=request.data['email']).exists():
-                return Response({"error": "User Email already exists!", "Success": False}, status.HTTP_200_OK)
-            role = request.data['role']
-            serializer = self.get_serializer(data=request.data)
-            if serializer.is_valid():
-                user = self.perform_create(serializer)
-                user.groups.add(role)
-                headers = self.get_success_headers(serializer.data)
-                user_data = UserSerializer(user).data
-                response = {
-                    'token': self.token,
-                    'Success': True,
-                    "status": 200,
-                    'user': user_data
-                }
-                return Response(response,
-                                status=status.HTTP_201_CREATED,
-                                headers=headers)
-            else:
-                return Response({"error": serializer.errors, "Success": False}, status.HTTP_200_OK)
-        except Exception as err:
-            return Response({"error": str(err), "Success": False})
+        if User.objects.filter(email=request.data['email']).exists():
+            return Response({"error": "User Email already exists!", "Success": False}, status.HTTP_200_OK)
+        role = request.data['role']
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            user = self.perform_create(serializer)
+            user.groups.add(role)
+            headers = self.get_success_headers(serializer.data)
+            user_data = UserSerializer(user).data
+            response = {
+                'token': self.token,
+                'Success': True,
+                "status": 200,
+                'user': user_data
+            }
+            return Response(response,
+                            status=status.HTTP_201_CREATED,
+                            headers=headers)
+        else:
+            return Response({"error": serializer.errors, "Success": False}, status.HTTP_200_OK)
 
 
-@permission_classes([AllowAny])
 class LoginView(GenericAPIView):
     serializer_class = LoginSerializer
+    permission_classes = [AllowAny, ]
 
     def post(self, request, *args, **kwargs):
 
-        try:
-            access_token = request.data.get("token", None)
-            if access_token:
-                response = self.google_login(access_token)
-            else:
-                self.request = request
-                self.serializer = self.get_serializer(data=self.request.data,
-                                                      context={'request': request})
-                self.serializer.is_valid(raise_exception=True)
+        access_token = request.data.get("token", None)
+        if access_token:
+            return self.google_login(access_token)
+        else:
+            self.request = request
+            self.serializer = self.get_serializer(data=self.request.data,
+                                                  context={'request': request})
+            if self.serializer.is_valid():
                 self.user = self.serializer.validated_data['user']
-                response = login(self)
-        except Exception as err:
-            return Response({"error": "Unable to Login with Provided Credentials", "Success": False})
-        return response
+                return self.login()
+            else:
+                return Response({"error": "Unable to Login with Provided Credentials", "Success": False})
 
     def google_login(self, access_token):
         payload = {'access_token': access_token}
-        r = requests.get(
+        response = requests.get(
             'https://www.googleapis.com/oauth2/v2/userinfo', params=payload)
-        data = json.loads(r.text)
+        google_api_response = json.loads(response.text)
 
-        if 'error' in data:
+        if 'error' in google_api_response:
             content = {
                 'message': 'wrong google token / this google token is already expired.'}
             return Response(content)
@@ -105,64 +100,69 @@ class LoginView(GenericAPIView):
                 user.save()
 
             self.user = user
-            response = login(self)
-            return response
+            return self.login()
 
         except Exception as err:
             return Response({"error": "Unable to Login with Provided Credentials", "Success": False})
+
+    def login(self):
+        self.token = jwt_encode(self.user)
+        serializer = UserSerializer(instance=self.user,
+                                    context={'request': self.request})
+        data = {
+            'token': self.token,
+            'Success': True,
+            'user': serializer.data
+        }
+        response = Response(
+            data, status=status.HTTP_200_OK)
+        return response
 
 
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     queryset = User.objects.all()
+    permission_classes = [IsAuthenticated, ]
 
     def create(self, request, **kwargs):
-        try:
-            number_of_users = User.objects.filter(
-                groups__name='Employee').count()
-            if number_of_users > MAX_EMPLOYEES:
-                return Response({'data': {}, 'Success': False, 'Error': 'Employees Limit Exceeded'}, status.HTTP_200_OK)
-            data = request.data
-            groups = data.get("role")
-            password1 = data.pop("password1")
-            password2 = data.pop("password2")
-            if password1 != password2:
-                return Response({'data': {}, 'Success': False, 'Error': 'Password not matched'}, status.HTTP_200_OK)
-            data['password'] = password1
-            user = UserSerializer(data=data)
-            if user.is_valid():
-                user.save(groups=groups)
-                return Response({'data': user.data, 'Success': True, 'Error': ''}, status.HTTP_200_OK)
-            else:
-                return Response({'data': {}, 'Success': False, 'Error': user.errors}, status.HTTP_200_OK)
-        except Exception as e:
-            return Response({'data': {}, 'Success': False, 'Error': str(e)}, status.HTTP_200_OK)
+
+        number_of_users = User.objects.filter(
+            groups__name='Employee').count()
+        if number_of_users > MAX_EMPLOYEES:
+            return Response({'data': {}, 'Success': False, 'Error': 'Employees Limit Exceeded'}, status.HTTP_200_OK)
+        data = request.data
+        groups = data.get("role")
+        password1 = data.pop("password1")
+        password2 = data.pop("password2")
+        if password1 != password2:
+            return Response({'data': {}, 'Success': False, 'Error': 'Password not matched'}, status.HTTP_200_OK)
+        data['password'] = password1
+        user = UserSerializer(data=data)
+        if user.is_valid():
+            user.save(groups=groups)
+            return Response({'data': user.data, 'Success': True, 'Error': ''}, status.HTTP_200_OK)
+        else:
+            return Response({'data': {}, 'Success': False, 'Error': user.errors}, status.HTTP_200_OK)
 
     def list(self, request):
-        try:
-            groups = request.query_params.get('groups', None)
-            print("groups", groups)
-            if groups:
-                print("in groups")
-                users = User.objects.filter(groups__name=groups)
-            else:
-                print("in else")
-                users = User.objects.all()
-            serializer = UserSerializer(users, many=True)
-            return Response({'data': serializer.data, "error": '', "Success": False})
-        except Exception as e:
-            print(e)
-            return Response({'data': [], "error": str(e), "Success": False})
+        groups = request.query_params.get('groups', None)
+
+        if groups:
+            users = User.objects.filter(groups__name=groups)
+        else:
+            users = User.objects.all()
+
+        serializer = UserSerializer(users, many=True)
+        return Response({'data': serializer.data, "error": '', "Success": False})
 
 
-@permission_classes([IsAuthenticated])
 class LogoutView(APIView):
     """
     Calls Django logout method and delete the Token object
     assigned to the current User object.
     Accepts/Returns nothing.
     """
-    permission_classes = (IsAuthenticated)
+    permission_classes = [IsAuthenticated, ]
 
     def post(self, request, *args, **kwargs):
         response = self.logout(request)

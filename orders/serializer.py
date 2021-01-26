@@ -19,17 +19,22 @@ class OrdersSerializer(serializers.ModelSerializer):
 
     def get_payment_method(self, obj):
         choices = Orders.PAYMENT_METHOD_CHOICES_DICT
-        if obj.payment_method is not None:
+        if obj.payment_method:
             payment_method = choices[obj.payment_method]
-        else:
-            payment_method = ""
-        return payment_method
+            return payment_method
+
+    def get_status(self, obj):
+        chioces = Orders.STATUS_CHOICES_DICT
+        if obj.status:
+            status = chioces[obj.status]
+            return status
 
     order = OrderItemsSerializerForListing(many=True)
     payment_method = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
 
     class Meta:
         model = Orders
         fields = ('id', 'created_at', 'payment_method',
-                  'total_bill', 'order_by',  'order', 'status')
+                  'total_bill', 'customer',  'order', 'status')
         depth = 2

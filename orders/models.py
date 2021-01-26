@@ -8,8 +8,6 @@ class Common(models.Model):
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
     deleted_at = models.DateTimeField(auto_now=False, null=True, blank=True)
     disabled_at = models.DateTimeField(auto_now=False, null=True, blank=True)
-    order_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
-                                 related_name='customer')
 
     class Meta:
         abstract = True
@@ -31,14 +29,29 @@ class Orders(Common):
         (Other, 'Other')
     )
 
+    PENDING = 1
+    COMPLETE = 2
+
+    STATUS_CHOICES_DICT = {
+        1: 'Pending',
+        2: 'Complete'
+    }
+
+    STATUS_CHOICES = (
+        (PENDING, 'PENDING'),
+        (COMPLETE, 'COMPLETE')
+    )
+
     total_bill = models.IntegerField()
     payment_method = models.IntegerField(
         choices=PAYMENT_METHOD_CHOICES, null=True)
-    status = models.CharField(max_length=20, default='Pending')
+    status = models.IntegerField(choices=STATUS_CHOICES, default=PENDING)
     is_checkedout = models.BooleanField(default=False)
+    customer = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                 related_name='customer')
 
 
-class OrderItems(models.Model):
+class OrderItems(Common):
 
     item_category = models.ForeignKey(ItemSize, on_delete=models.CASCADE, null=True, blank=True,
                                       related_name='product')
