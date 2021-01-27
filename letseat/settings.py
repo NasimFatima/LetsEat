@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 from pathlib import Path
-
+import os
 # Setting for User app and JWT authentication
 # from user.settings import *
 
@@ -32,7 +32,7 @@ SECRET_KEY = 'i9zy8m5m39)q!nqvy7wq_g9uoy85p&qzw5q2u7oe&2*3-ytfp)'
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-ALLOWED_METHODS = ['*']
+ALLOWED_METHODS = ['GET', 'PUT', 'POST', 'PATCH', 'DELETE']
 ALLOWED_HEADERS = ['*']
 
 CORS_ALLOWED_ORIGINS = ["http://localhost:3000", ]
@@ -172,7 +172,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
-
+STATIC_ROOT = os.path.join(BASE_DIR, '_staticfiles_')
 # ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
