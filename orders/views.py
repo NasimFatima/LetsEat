@@ -15,6 +15,7 @@ class OrdersViewSet(viewsets.ModelViewSet):
     def create(self, request, **kwargs):
         data = request.data
         order_type = data.get('type', None)
+
         if order_type == 'place_order':
             data.pop("type")
             order_exists = Orders.objects.filter(
@@ -22,7 +23,6 @@ class OrdersViewSet(viewsets.ModelViewSet):
             order_exists.is_checkedout = True
             order_exists.save()
         else:
-
             order_item = data.pop('order_items', None)
             order_exists = Orders.objects.filter(
                 customer=request.user, is_checkedout=False).order_by('-id').first()
@@ -38,13 +38,11 @@ class OrdersViewSet(viewsets.ModelViewSet):
                 order=order_exists.id, item_category=order_item['item_category']).first()
 
             if order_item_exists:
-
                 if order_item['quantity'] > 0:
                     order_item_exists.quantity = order_item['quantity']
                     order_item_exists.save()
                 else:
                     order_item_exists.delete()
-
             else:
                 order_item['order'] = order_exists.id
                 serializer = OrderItemsSerializer(data=order_item)
