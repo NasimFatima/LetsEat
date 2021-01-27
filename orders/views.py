@@ -10,7 +10,7 @@ from rest_framework.decorators import action
 class OrdersViewSet(viewsets.ModelViewSet):
     queryset = Orders.objects.all()
     serializer_class = OrdersSerializer
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated]
 
     def create(self, request, **kwargs):
         data = request.data
@@ -55,7 +55,6 @@ class OrdersViewSet(viewsets.ModelViewSet):
         return Response({'data': serializer.data})
 
     def list(self, request, **kwargs):
-
         if request.user.groups.filter(name='Customer').exists():
             orders = Orders.objects.filter(
                 customer=request.user.id).exclude(is_checkedout=False).order_by('-id')
@@ -67,7 +66,6 @@ class OrdersViewSet(viewsets.ModelViewSet):
 
     @action(detail=False)
     def cart_items(self, request):
-
         orders = Orders.objects.filter(
             is_checkedout=False, customer=request.user.id).order_by('-id')
         serializer = self.get_serializer(orders, many=True)
@@ -75,7 +73,6 @@ class OrdersViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def change_order_status(self, request, pk=None):
-
         order = Orders.objects.filter(id=pk).first()
         order.status = request.data['status']
         order.save()

@@ -25,7 +25,7 @@ from rest_auth.utils import jwt_encode
 class GroupViewSet(viewsets.ModelViewSet):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated]
 
 
 class CustomRegisterView(RegisterView):
@@ -34,7 +34,7 @@ class CustomRegisterView(RegisterView):
     that extends RegisterView. Create function is
     overriden to return a more detailed response
     """
-    permission_classes = [AllowAny, ]
+    permission_classes = [AllowAny]
 
     def create(self, request, *args, **kwargs):
 
@@ -57,12 +57,12 @@ class CustomRegisterView(RegisterView):
                             status=status.HTTP_201_CREATED,
                             headers=headers)
         else:
-            return Response({"error": serializer.errors, "Success": False}, status.HTTP_200_OK)
+            return Response({"error": serializer.errors, "Success": False}, status.HTTP_400_BAD_REQUEST)
 
 
 class LoginView(GenericAPIView):
     serializer_class = LoginSerializer
-    permission_classes = [AllowAny, ]
+    permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
 
@@ -77,7 +77,7 @@ class LoginView(GenericAPIView):
                 self.user = self.serializer.validated_data['user']
                 return self.login()
             else:
-                return Response({"error": "Unable to Login with Provided Credentials", "Success": False})
+                return Response({"error": "Unable to Login with Provided Credentials", "Success": False}, status.HTTP_400_BAD_REQUEST)
 
     def google_login(self, access_token):
         payload = {'access_token': access_token}
@@ -103,7 +103,7 @@ class LoginView(GenericAPIView):
             return self.login()
 
         except Exception as err:
-            return Response({"error": "Unable to Login with Provided Credentials", "Success": False})
+            return Response({"error": "Unable to Login with Provided Credentials", "Success": False}, status.HTTP_400_BAD_REQUEST)
 
     def login(self):
         self.token = jwt_encode(self.user)
@@ -122,27 +122,27 @@ class LoginView(GenericAPIView):
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     queryset = User.objects.all()
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated]
 
     def create(self, request, **kwargs):
 
         number_of_users = User.objects.filter(
             groups__name='Employee').count()
         if number_of_users > MAX_EMPLOYEES:
-            return Response({'data': {}, 'Success': False, 'Error': 'Employees Limit Exceeded'}, status.HTTP_200_OK)
+            return Response({'data': {}, 'Success': False, 'Error': 'Employees Limit Exceeded'}, status.HTTP_400_BAD_REQUEST)
         data = request.data
         groups = data.get("role")
         password1 = data.pop("password1")
         password2 = data.pop("password2")
         if password1 != password2:
-            return Response({'data': {}, 'Success': False, 'Error': 'Password not matched'}, status.HTTP_200_OK)
+            return Response({'data': {}, 'Success': False, 'Error': 'Password not matched'}, status.HTTP_400_BAD_REQUEST)
         data['password'] = password1
         user = UserSerializer(data=data)
         if user.is_valid():
             user.save(groups=groups)
             return Response({'data': user.data, 'Success': True, 'Error': ''}, status.HTTP_200_OK)
         else:
-            return Response({'data': {}, 'Success': False, 'Error': user.errors}, status.HTTP_200_OK)
+            return Response({'data': {}, 'Success': False, 'Error': user.errors}, status.HTTP_400_BAD_REQUEST)
 
     def list(self, request):
         groups = request.query_params.get('groups', None)
@@ -162,7 +162,7 @@ class LogoutView(APIView):
     assigned to the current User object.
     Accepts/Returns nothing.
     """
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         response = self.logout(request)
