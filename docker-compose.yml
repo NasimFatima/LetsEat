@@ -1,0 +1,25 @@
+# @format
+
+version: "3.3"
+
+volumes:
+  postgresql-volume: {}
+
+services:
+  letseat:
+    depends_on:
+      - database
+    build: .
+    ports:
+      - "8000:8000" # we'll use port 5000 for django
+    volumes:
+      - .:/code # djangoapp mounted to docker from current directory
+    command: ./entrypoint.sh
+
+  database:
+    image: postgres:10.1 # install postgre here
+    volumes:
+      - postgresql-volume:/var/lib/postgresql/data # avoid data removal when shut docker down we put volume in our local
+    ports:
+      - "5435:5432" # pointing port 5435 from our environment to postgre default port 5432 in docker
+

@@ -11,7 +11,13 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 from pathlib import Path
+import os
+# Setting for User app and JWT authentication
+# from user.settings import *
 
+from django.conf import settings
+import datetime
+from rest_framework.settings import APISettings
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -25,20 +31,50 @@ SECRET_KEY = 'i9zy8m5m39)q!nqvy7wq_g9uoy85p&qzw5q2u7oe&2*3-ytfp)'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
+ALLOWED_METHODS = ['GET', 'PUT', 'POST', 'PATCH', 'DELETE']
+ALLOWED_HEADERS = ['*']
 
+CORS_ALLOWED_ORIGINS = ["http://localhost:3000", ]
 
+# used in user app
+USER_APP_SETTINGS = {
+    "USER_MODEL": 'user.User',
+    "USE_JWT": True,
+    "JWT_AUTH": {
+        'JWT_EXPIRATION_DELTA': datetime.timedelta(days=1),
+    }
+}
 # Application definition
 
-INSTALLED_APPS = [
+DJANGO_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_filters',
+]
+PROJECT_APPS = [
+    'user',
+    'menu',
+    'orders'
 ]
 
+THIRD_PARTY_APPS = [
+    'rest_framework',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'corsheaders',
+]
+
+INSTALLED_APPS = DJANGO_APPS + PROJECT_APPS + THIRD_PARTY_APPS
+
+SITE_ID = 1
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -47,6 +83,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
+
 ]
 
 ROOT_URLCONF = 'letseat.urls'
@@ -75,9 +114,24 @@ WSGI_APPLICATION = 'letseat.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'letseatdb',
+        'USER': 'admin',
+        'PASSWORD': 'pizza123',
+        'HOST': 'localhost',
+        'PORT': '5432'
     }
+}
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+    ),
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
+
 }
 
 
@@ -118,3 +172,15 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, '_staticfiles_')
+# ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 2
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+
+AUTH_USER_MODEL = USER_APP_SETTINGS['USER_MODEL']
+REST_USE_JWT = USER_APP_SETTINGS['USE_JWT']
+JWT_AUTH = USER_APP_SETTINGS['JWT_AUTH']
+MAX_EMPLOYEES = 1000
